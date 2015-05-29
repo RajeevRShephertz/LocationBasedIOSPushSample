@@ -1,0 +1,8 @@
+/* 
+  Localizable.strings
+  App42PushNotificationSample
+
+  Created by Rajeev Ranjan on 05/05/15.
+  Copyright (c) 2015 ShepHertz Technologies Pvt Ltd. All rights reserved.
+*/
+"GAME_PLAY_REQUEST_FORMAT" = "Your Frnd has invited you to play Monopoly";
