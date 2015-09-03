@@ -192,17 +192,19 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
             BOOL isEligible = NO;
             CLPlacemark *placemark = [placemarks lastObject];
             
-            NSString *state, *country,*city;
+            NSString *state, *countryName, *countryCode, *city;
             state = [placemark.administrativeArea uppercaseString];
-            country = [placemark.ISOcountryCode uppercaseString];
+            countryName = [placemark.country uppercaseString];
+            countryCode = [placemark.ISOcountryCode uppercaseString];
             city = [placemark.locality uppercaseString];
             
-            NSString *countryForPush,*stateForPush,*cityForPush;
+            NSString *countryNameForPush,*countryCodeForPush,*stateForPush,*cityForPush;
             stateForPush = [[_pushMessageDict objectForKey:APP42_STATENAME] uppercaseString];
-            countryForPush = [[_pushMessageDict objectForKey:APP42_COUNTRYCODE] uppercaseString];
+            countryNameForPush = [[_pushMessageDict objectForKey:APP42_COUNTRYCODE] uppercaseString];
+            countryCodeForPush = [[_pushMessageDict objectForKey:APP42_COUNTRYCODE] uppercaseString];
             cityForPush = [[_pushMessageDict objectForKey:APP42_CITYNAME] uppercaseString];
             
-            if (countryForPush && [countryForPush isEqualToString:country])
+            if ((countryNameForPush && [countryNameForPush isEqualToString:countryName]) || (countryCodeForPush && [countryCodeForPush isEqualToString:countryName]))
             {
                 if (stateForPush && [stateForPush isEqualToString:state])
                 {

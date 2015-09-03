@@ -29,7 +29,7 @@
 {
     
     [App42API initializeWithAPIKey:@"APP42_APP_KEY" andSecretKey:@"APP42_SECRET_KEY"];
-    //[App42API enableApp42Trace:YES]; //Enable to see SDK internal logs
+    [App42API enableApp42Trace:YES]; //Enable to see SDK internal logs
     
     // Let the device know we want to receive push notifications
     // Register for Push Notitications, if running on iOS 8
@@ -53,6 +53,19 @@
     
     // Initialize the plugin
     [App42PushManager sharedManager];
+    
+    self.window = [[[UIWindow alloc] initWithFrame:[[UIScreen mainScreen] bounds]] autorelease];
+    // Override point for customization after application launch.
+    if ([[UIDevice currentDevice] userInterfaceIdiom] == UIUserInterfaceIdiomPhone)
+    {
+        self.viewController = [[[ViewController alloc] initWithNibName:@"ViewController_iPhone" bundle:nil] autorelease];
+    }
+    else
+    {
+        self.viewController = [[[ViewController alloc] initWithNibName:@"ViewController_iPad" bundle:nil] autorelease];
+    }
+    self.window.rootViewController = self.viewController;
+    [self.window makeKeyAndVisible];
     return YES;
 }
 
@@ -97,6 +110,7 @@
 
 -(void)application:(UIApplication *)application didReceiveRemoteNotification:(NSDictionary *)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
+     NSLog(@"%s ..userInfo=%@",__FUNCTION__,userInfo);
     /**
      * Handles the geo based push messages and decides the eligibility of the push that should be shown to user or not
      */
