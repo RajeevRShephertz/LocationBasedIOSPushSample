@@ -96,6 +96,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
         self.pushMessageDict = [userInfo copy];
         fetchCompletion = completionHandler;
         [self beginNewBackgroundTask];
+        locManager.delegate = self;
         [locManager startUpdatingLocation];
     }
     completionHandler(UIBackgroundFetchResultNewData);
@@ -108,7 +109,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 }
 
 #pragma mark- Location Manager Delegates
-- (void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
+-(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
 {
     // check status to see if we’re authorized
     BOOL canUseLocationNotifications = (status == kCLAuthorizationStatusAuthorizedAlways);
@@ -121,6 +122,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 -(void)locationManager:(CLLocationManager *)manager didUpdateLocations:(NSArray *)locations
 {
     [locManager stopUpdatingLocation];
+    locManager.delegate = nil;
     CLLocation *newLocation = [locations lastObject];
     
     NSString *geoBaseType = [_pushMessageDict objectForKey:APP42_GEOBASE];
@@ -146,9 +148,11 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     }
 }
 
-- (void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
+-(void)locationManager:(CLLocationManager *)manager didFailWithError:(NSError *)error
 {
+    NSLog(@"%s",__func__);
      [locManager stopUpdatingLocation];
+    locManager.delegate = nil;
     [self endAllBackgroundTasks];
 }
 

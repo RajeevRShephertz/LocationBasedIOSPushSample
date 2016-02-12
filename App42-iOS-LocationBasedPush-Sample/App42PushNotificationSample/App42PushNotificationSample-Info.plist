@@ -28,7 +28,6 @@
 	<string>Enabling location tracking allows friends to see where you are.</string>
 	<key>UIBackgroundModes</key>
 	<array>
-		<string>fetch</string>
 		<string>location</string>
 		<string>remote-notification</string>
 	</array>

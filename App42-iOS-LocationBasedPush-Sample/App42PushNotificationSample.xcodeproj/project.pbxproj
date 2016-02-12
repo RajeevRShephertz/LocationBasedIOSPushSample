@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		5D3F8A451B9DAF0C00C65FE2 /* PushKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5D3F8A441B9DAF0C00C65FE2 /* PushKit.framework */; };
 		5D887AFF1AA6EB1800DB6C9F /* CoreLocation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5D887AFE1AA6EB1800DB6C9F /* CoreLocation.framework */; };
 		5D98F2681A406BC8004FE767 /* CoreTelephony.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5D98F2671A406BC8004FE767 /* CoreTelephony.framework */; };
 		5D98F26A1A406BD1004FE767 /* SystemConfiguration.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 5D98F2691A406BD1004FE767 /* SystemConfiguration.framework */; };
@@ -28,6 +29,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		5D3F8A441B9DAF0C00C65FE2 /* PushKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = PushKit.framework; path = System/Library/Frameworks/PushKit.framework; sourceTree = SDKROOT; };
 		5D887AFE1AA6EB1800DB6C9F /* CoreLocation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreLocation.framework; path = System/Library/Frameworks/CoreLocation.framework; sourceTree = SDKROOT; };
 		5D98F2671A406BC8004FE767 /* CoreTelephony.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = CoreTelephony.framework; path = System/Library/Frameworks/CoreTelephony.framework; sourceTree = SDKROOT; };
 		5D98F2691A406BD1004FE767 /* SystemConfiguration.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SystemConfiguration.framework; path = System/Library/Frameworks/SystemConfiguration.framework; sourceTree = SDKROOT; };
@@ -59,6 +61,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				5D3F8A451B9DAF0C00C65FE2 /* PushKit.framework in Frameworks */,
 				5D887AFF1AA6EB1800DB6C9F /* CoreLocation.framework in Frameworks */,
 				5D98F26A1A406BD1004FE767 /* SystemConfiguration.framework in Frameworks */,
 				5D98F2681A406BC8004FE767 /* CoreTelephony.framework in Frameworks */,
@@ -103,6 +106,7 @@
 		D77EC88117A671410090378E /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				5D3F8A441B9DAF0C00C65FE2 /* PushKit.framework */,
 				5D887AFE1AA6EB1800DB6C9F /* CoreLocation.framework */,
 				5DD86B6B1A47EC1300D6B84F /* Shephertz_App42_iOS_API.framework */,
 				5D98F2691A406BD1004FE767 /* SystemConfiguration.framework */,
