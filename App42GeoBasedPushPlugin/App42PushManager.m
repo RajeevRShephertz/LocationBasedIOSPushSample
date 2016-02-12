@@ -22,8 +22,15 @@
 #define APP42_PUSH_MESSAGE      @"app42_message"
 #define APP42_LONGITUDE         @"app42_lng"
 #define APP42_LATITUDE          @"app42_lat"
-#define APP42_RADIUS            @"app42_distance"
 #define APP42_LOC_IDENTIFIER    @"APP42_LOC_IDENTIFIER"
+
+/**
+ * Keys for multi-location push payload
+ */
+#define APP42_MAPLOCATION       @"app42_mapLocation"
+#define APP42_LAT               @"lat"
+#define APP42_LNG               @"lng"
+#define APP42_RADIUS            @"radius"
 
 typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
@@ -174,15 +181,42 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
 -(BOOL)isEligibleForNotificationWithCoordinate:(CLLocation*)newLocation
 {
+    BOOL isInTheRegion = NO;
+    NSString *multiLocations = [_pushMessageDict objectForKey:APP42_MAPLOCATION];
+    if (multiLocations) {
+        NSError *error = nil;
+        NSArray *regions = [NSJSONSerialization JSONObjectWithData:[multiLocations dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
+        NSLog(@"MapDict = %@",regions);
+        for (NSDictionary *regionCoordinates in regions) {
+            CLLocationCoordinate2D center;
+            center.longitude = [[regionCoordinates objectForKey:APP42_LNG] doubleValue];
+            center.latitude  = [[regionCoordinates objectForKey:APP42_LAT] doubleValue];
+           
+            NSLog(@"Lat = %lf",[[regionCoordinates objectForKey:APP42_LAT] doubleValue]);
+            NSLog(@"Lng = %lf",[[regionCoordinates objectForKey:APP42_LNG] doubleValue]);
+            NSLog(@"Radius = %lf",[[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]);
+            
+            CLLocationDistance radius = [[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]*1000;
+            
+            CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
+            isInTheRegion = [region containsCoordinate:newLocation.coordinate];
+            if (isInTheRegion) {
+                break;
+            }
+        }
+    }
+    else
+    {
+        CLLocationCoordinate2D center;
+        center.longitude = [[_pushMessageDict objectForKey:APP42_LONGITUDE] doubleValue];
+        center.latitude  = [[_pushMessageDict objectForKey:APP42_LATITUDE] doubleValue];
+        
+        CLLocationDistance radius = [[_pushMessageDict objectForKey:APP42_DISTANCE] doubleValue]*1000;
+        
+        CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
+        isInTheRegion = [region containsCoordinate:newLocation.coordinate];
+    }
     
-    CLLocationCoordinate2D center;
-    center.longitude = [[_pushMessageDict objectForKey:APP42_LONGITUDE] doubleValue];
-    center.latitude  = [[_pushMessageDict objectForKey:APP42_LATITUDE] doubleValue];
-    
-    CLLocationDistance radius = [[_pushMessageDict objectForKey:APP42_RADIUS] doubleValue]*1000;
-    
-    CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
-    BOOL isInTheRegion = [region containsCoordinate:newLocation.coordinate];
     return isInTheRegion;
 }
 
