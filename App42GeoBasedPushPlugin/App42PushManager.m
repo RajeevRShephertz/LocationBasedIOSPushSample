@@ -186,15 +186,15 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     if (multiLocations) {
         NSError *error = nil;
         NSArray *regions = [NSJSONSerialization JSONObjectWithData:[multiLocations dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
-        NSLog(@"MapDict = %@",regions);
+        //NSLog(@"MapDict = %@",regions);
         for (NSDictionary *regionCoordinates in regions) {
             CLLocationCoordinate2D center;
             center.longitude = [[regionCoordinates objectForKey:APP42_LNG] doubleValue];
             center.latitude  = [[regionCoordinates objectForKey:APP42_LAT] doubleValue];
            
-            NSLog(@"Lat = %lf",[[regionCoordinates objectForKey:APP42_LAT] doubleValue]);
+            /*NSLog(@"Lat = %lf",[[regionCoordinates objectForKey:APP42_LAT] doubleValue]);
             NSLog(@"Lng = %lf",[[regionCoordinates objectForKey:APP42_LNG] doubleValue]);
-            NSLog(@"Radius = %lf",[[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]);
+            NSLog(@"Radius = %lf",[[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]);*/
             
             CLLocationDistance radius = [[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]*1000;
             
