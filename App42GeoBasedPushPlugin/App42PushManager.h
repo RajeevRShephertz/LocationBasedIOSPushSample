@@ -37,5 +37,6 @@
  * Call to trigger the plugin
  */
 -(void)handleGeoBasedPush:(NSDictionary*)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler;
+-(void)sendGeoFencingPush:(CLRegion*)region forEvent:(NSString*)event;
 
 @end

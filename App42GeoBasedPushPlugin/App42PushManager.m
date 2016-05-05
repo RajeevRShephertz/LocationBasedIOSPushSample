@@ -8,7 +8,7 @@
 
 #import <UIKit/UIKit.h>
 #import "App42PushManager.h"
-
+#import <Shephertz_App42_iOS_API/Shephertz_App42_iOS_API.h>
 
 #define APP42_GEOBASE           @"app42_geoBase"
 #define APP42_ADDRESSBASE       @"addressBase"
@@ -23,6 +23,21 @@
 #define APP42_LONGITUDE         @"app42_lng"
 #define APP42_LATITUDE          @"app42_lat"
 #define APP42_LOC_IDENTIFIER    @"APP42_LOC_IDENTIFIER"
+#define APP42_FENCEDETAILS      @"app42_fencedetails"
+
+/**
+ * Keys for Geo-Fence push payload
+ */
+#define APP42_GEOFENCEID        @"app42_geoFenceId"
+#define APP42_GEOFENCEDATA      @"_App42GeoFenceData"
+#define APP42_ENTRY             @"app42_entry"
+#define APP42_EXIT              @"app42_exit"
+
+/**
+ * Keys for Geo-Fence entry-exit response keys
+ */
+
+#define APP42_ISVALID   @"isValid"
 
 /**
  * Keys for multi-location push payload
@@ -32,6 +47,27 @@
 #define APP42_LNG               @"lng"
 #define APP42_RADIUS            @"radius"
 
+/**
+ * Keys for push campaign
+ */
+#define APP42_GEOCAMPAIGN       @"_App42GeoCampaign"
+#define APP42_CAMPAIGNNAME      @"_App42CampaignName"
+#define APP42_GEOFENCECOORDINATES  @"_App42GeoFenceCoordinates"
+#define APP42_GEOTARGETCOORDINATES @"_App42GeoTargetCoordinates"
+
+typedef enum : NSUInteger {
+    kAPP42GEOCAMPAIGN,
+    kAPP42GEONORMAL,
+    kAPP42GEOFENCE,
+    kAPP42NONE,
+} App42PushType;
+
+typedef enum : NSUInteger {
+    kAPP42COORDINATE,
+    kAPP42ADDRESS,
+    kAPP42GEONONE,
+} App42GeoType;
+
 typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
 @interface App42PushManager ()
@@ -40,8 +76,11 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 }
 
 @property(nonatomic) NSDictionary *pushMessageDict;
-@property (nonatomic, strong)NSMutableArray* bgTaskIdList;
-@property (assign) UIBackgroundTaskIdentifier lastTaskId;
+@property(nonatomic) NSDictionary *app42GeoCampaign;
+@property(nonatomic, strong)NSMutableArray* bgTaskIdList;
+@property(assign) UIBackgroundTaskIdentifier lastTaskId;
+@property(assign) App42PushType pushType;
+@property(assign) App42GeoType geoType;
 
 -(void)requestToAccessLocation;
 -(BOOL)isApp42GeoBasedPush:(NSDictionary*)userInfo;
@@ -96,19 +135,120 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
 -(void)handleGeoBasedPush:(NSDictionary*)userInfo fetchCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
 {
-    NSString *geoBaseType = [userInfo objectForKey:APP42_GEOBASE];
+    NSString *geoBaseType = nil;
+    [self getCampaignType:userInfo];
+    if (self.pushType == kAPP42GEOCAMPAIGN)
+    {
+        NSString *geoCampInfo = [userInfo objectForKey:APP42_GEOCAMPAIGN];
+        NSError *error = nil;
+        NSDictionary *geoCampDict = [NSJSONSerialization JSONObjectWithData:[geoCampInfo dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
+        self.app42GeoCampaign = [geoCampDict copy];
+        geoBaseType = [_app42GeoCampaign objectForKey:APP42_GEOBASE];
+    }
+    else if (self.pushType == kAPP42GEOFENCE)
+    {
+        [self startGeoFenceMonitoring:userInfo];
+    }
+    else
+    {
+        geoBaseType = [userInfo objectForKey:APP42_GEOBASE];
+    }
+    [self getGeoBaseType:geoBaseType];
     if (geoBaseType)
     {
-        NSLog(@"%s...Processing geo-based push",__func__);
         self.pushMessageDict = [userInfo copy];
         fetchCompletion = completionHandler;
         [self beginNewBackgroundTask];
         locManager.delegate = self;
         [locManager startUpdatingLocation];
     }
-    completionHandler(UIBackgroundFetchResultNewData);
+    if (completionHandler) {
+        completionHandler(UIBackgroundFetchResultNewData);
+    }
 }
 
+-(void)getCampaignType:(NSDictionary*)userInfo
+{
+    NSString *geoCampInfo = [userInfo objectForKey:APP42_GEOCAMPAIGN];
+    NSString *geoFenceInfo = [userInfo objectForKey:APP42_GEOFENCECOORDINATES];
+    if (geoCampInfo) {
+        self.pushType = kAPP42GEOCAMPAIGN;
+    }
+    else if(geoFenceInfo)
+    {
+        self.pushType = kAPP42GEOFENCE;
+    }
+    else
+    {
+        self.pushType = kAPP42GEONORMAL;
+    }
+}
+
+-(void)getGeoBaseType:(NSString*)geoBaseType
+{
+    if ([geoBaseType isEqualToString:APP42_COORDINATEBASE]) {
+        self.geoType = kAPP42COORDINATE;
+    }
+    else if ([geoBaseType isEqualToString:APP42_COORDINATEBASE]) {
+        self.geoType = kAPP42ADDRESS;
+    }
+    else
+    {
+        self.geoType = kAPP42GEONONE;
+    }
+}
+
+-(void)startGeoFenceMonitoring:(NSDictionary*)fenceInfo
+{
+    NSError *error1 = nil;
+    NSString *fenceCoordinatesStr = [fenceInfo objectForKey:APP42_GEOFENCECOORDINATES];
+    NSArray *fenceCoordinates = [NSJSONSerialization JSONObjectWithData:[fenceCoordinatesStr dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error1];
+    
+    NSError *error2 = nil;
+    NSString *fenceDataStr = [fenceInfo objectForKey:APP42_GEOFENCEDATA];
+    NSDictionary *fenceData = [NSJSONSerialization JSONObjectWithData:[fenceDataStr dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error2];
+    for (NSDictionary *fence in fenceCoordinates) {
+        CLLocationCoordinate2D center;
+        center.longitude = [[fence objectForKey:APP42_LONGITUDE] doubleValue];
+        center.latitude  = [[fence objectForKey:APP42_LATITUDE] doubleValue];
+
+        CLLocationDistance radius = [[fence objectForKey:APP42_DISTANCE] doubleValue]*1000;
+        NSString *fenceId = [NSString stringWithFormat:@"%@$$$%d",[fenceData objectForKey:APP42_CAMPAIGNNAME],[[fence objectForKey:APP42_GEOFENCEID] intValue]];
+        // Initialize Region to Monitor
+        CLRegion *region = [[CLRegion alloc] initCircularRegionWithCenter:center radius:radius identifier:fenceId];
+        region.notifyOnEntry = [[fenceData objectForKey:APP42_ENTRY] boolValue];
+        region.notifyOnExit = [[fenceData objectForKey:APP42_EXIT] boolValue];
+        //Save fence data for future use
+        [self addFenceDetails:[fenceData objectForKey:APP42_CAMPAIGNNAME] forFence:fenceId];
+        // Start Monitoring Region
+        [self.locManager startMonitoringForRegion:region];
+        NSLog(@"End");
+    }
+}
+
+-(void)stopMonitoringForFenceWithID:(CLRegion*)regi
+{
+    
+}
+
+-(void)addFenceDetails:(NSString*)campaignName forFence:(NSString*)fenceId
+{
+    NSMutableDictionary *fenceDetails = [[[NSUserDefaults standardUserDefaults] objectForKey:APP42_FENCEDETAILS] mutableCopy];
+    if (!fenceDetails && fenceDetails.count) {
+        [fenceDetails setObject:campaignName forKey:fenceId];
+        [[NSUserDefaults standardUserDefaults] setObject:fenceDetails forKey:APP42_FENCEDETAILS];
+        
+    } else {
+        NSDictionary *fenceDetailsDict = [NSDictionary dictionaryWithObjectsAndKeys:campaignName,fenceId, nil];
+        [[NSUserDefaults standardUserDefaults] setObject:fenceDetailsDict forKey:APP42_FENCEDETAILS];
+    }
+}
+
+-(NSString*)getFenceDetails:(NSString*)fenceId
+{
+    NSMutableDictionary *fenceDetails = [[[NSUserDefaults standardUserDefaults] objectForKey:APP42_FENCEDETAILS] mutableCopy];
+    return [fenceDetails objectForKey:fenceId];
+}
 
 - (void)startShowingNotifications
 {
@@ -132,8 +272,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     locManager.delegate = nil;
     CLLocation *newLocation = [locations lastObject];
     
-    NSString *geoBaseType = [_pushMessageDict objectForKey:APP42_GEOBASE];
-    if ([geoBaseType isEqualToString:APP42_COORDINATEBASE])
+    if (self.geoType == kAPP42COORDINATE)
     {
         if ([self isEligibleForNotificationWithCoordinate:newLocation])
         {
@@ -145,7 +284,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
         }
         [self endAllBackgroundTasks];
     }
-    else if ([geoBaseType isEqualToString:APP42_ADDRESSBASE])
+    else if (self.geoType == kAPP42ADDRESS)
     {
         [self showNotificationIfEligibleWithAddress:newLocation];
     }
@@ -161,6 +300,54 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
      [locManager stopUpdatingLocation];
     locManager.delegate = nil;
     [self endAllBackgroundTasks];
+}
+
+
+- (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    
+    [self scheduleNotificationWithMessage:[NSString stringWithFormat:@"Entered the region...%@",region.identifier]];
+    [self sendGeoFencingPush:region forEvent:@"entry"];
+}
+
+- (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
+    NSLog(@"%s", __PRETTY_FUNCTION__);
+    [self scheduleNotificationWithMessage:[NSString stringWithFormat:@"Exiting the region...%@",region.identifier]];
+    [self sendGeoFencingPush:region forEvent:@"exit"];
+}
+
+-(void)sendGeoFencingPush:(CLRegion*)region forEvent:(NSString*)event
+{
+    NSString *campaignName = [self getFenceDetails:region.identifier];
+    NSString *fenceId = [[region.identifier componentsSeparatedByString:@"$$$"] lastObject];
+    EventService *eventService = [App42API buildEventService];
+    NSMutableDictionary *geoProps = [NSMutableDictionary dictionaryWithObjectsAndKeys:fenceId,@"geoFenceId", campaignName,@"campaignName",event,@"event",nil];
+    
+    [eventService sendGeoFencingPush:[NSDictionary dictionary] geoProps:geoProps completionBlock:^(BOOL success, id responseObj, App42Exception *exception) {
+        if (success) {
+            NSLog(@"Fence tracked successfully");
+            BOOL isValid = [self isFenceValid:responseObj];
+            if (!isValid) {
+                NSLog(@"Invalid Fence...stopping it");
+                [self.locManager stopMonitoringForRegion:region];
+            }
+        }
+        else
+        {
+            NSLog(@"Exception : %@",exception.reason);
+        }
+    }];
+}
+
+
+-(BOOL)isFenceValid:(id)responseDict
+{
+    BOOL isValid = NO;
+    App42Response *app42Response = (App42Response*)responseDict;
+    NSError *error = nil;
+    NSDictionary *response = [NSJSONSerialization JSONObjectWithData:[app42Response.strResponse dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
+    isValid = [[[[response objectForKey:@"app42"] objectForKey:@"response"] objectForKey:APP42_ISVALID] boolValue];
+    return isValid;
 }
 
 
@@ -182,22 +369,44 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 -(BOOL)isEligibleForNotificationWithCoordinate:(CLLocation*)newLocation
 {
     BOOL isInTheRegion = NO;
-    NSString *multiLocations = [_pushMessageDict objectForKey:APP42_MAPLOCATION];
-    if (multiLocations) {
-        NSError *error = nil;
-        NSArray *regions = [NSJSONSerialization JSONObjectWithData:[multiLocations dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
-        //NSLog(@"MapDict = %@",regions);
+    NSString *multiLocations = nil;
+    NSArray *regions = nil;
+    if (self.pushType == kAPP42GEOCAMPAIGN) {
+        regions = [_app42GeoCampaign objectForKey:APP42_GEOTARGETCOORDINATES];
+    }
+    else
+    {
+        multiLocations = [_pushMessageDict objectForKey:APP42_MAPLOCATION];
+        if (multiLocations) {
+            NSError *error = nil;
+            regions = [NSJSONSerialization JSONObjectWithData:[multiLocations dataUsingEncoding:NSUTF8StringEncoding] options:NSJSONReadingMutableContainers error:&error];
+        }
+    }
+    if (regions) {
+        
         for (NSDictionary *regionCoordinates in regions) {
             CLLocationCoordinate2D center;
-            center.longitude = [[regionCoordinates objectForKey:APP42_LNG] doubleValue];
-            center.latitude  = [[regionCoordinates objectForKey:APP42_LAT] doubleValue];
+            if ([regionCoordinates objectForKey:APP42_LNG]) {
+                center.longitude = [[regionCoordinates objectForKey:APP42_LNG] doubleValue];
+                center.latitude  = [[regionCoordinates objectForKey:APP42_LAT] doubleValue];
+            }
+            else
+            {
+                center.longitude = [[regionCoordinates objectForKey:APP42_LONGITUDE] doubleValue];
+                center.latitude  = [[regionCoordinates objectForKey:APP42_LATITUDE] doubleValue];
+            }
            
             /*NSLog(@"Lat = %lf",[[regionCoordinates objectForKey:APP42_LAT] doubleValue]);
             NSLog(@"Lng = %lf",[[regionCoordinates objectForKey:APP42_LNG] doubleValue]);
             NSLog(@"Radius = %lf",[[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]);*/
             
             CLLocationDistance radius = [[regionCoordinates objectForKey:APP42_RADIUS] doubleValue]*1000;
-            
+            if (self.pushType == kAPP42GEOCAMPAIGN) {
+                radius = [[regionCoordinates objectForKey:APP42_DISTANCE] doubleValue]*1000;
+            }
+           // NSLog(@"1..Lat=%f, Long = %f",newLocation.coordinate.latitude,newLocation.coordinate.longitude);
+            //NSLog(@"2..Lat=%f, Long = %f",center.latitude,center.longitude);
+
             CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
             isInTheRegion = [region containsCoordinate:newLocation.coordinate];
             if (isInTheRegion) {
@@ -205,14 +414,21 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
             }
         }
     }
+    else if(self.pushType == kAPP42GEOCAMPAIGN)
+    {
+        CLLocationCoordinate2D center;
+        center.longitude = [[_app42GeoCampaign objectForKey:APP42_LONGITUDE] doubleValue];
+        center.latitude  = [[_app42GeoCampaign objectForKey:APP42_LATITUDE] doubleValue];
+        CLLocationDistance radius = [[_app42GeoCampaign objectForKey:APP42_DISTANCE] doubleValue]*1000;
+        CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
+        isInTheRegion = [region containsCoordinate:newLocation.coordinate];
+    }
     else
     {
         CLLocationCoordinate2D center;
         center.longitude = [[_pushMessageDict objectForKey:APP42_LONGITUDE] doubleValue];
         center.latitude  = [[_pushMessageDict objectForKey:APP42_LATITUDE] doubleValue];
-        
         CLLocationDistance radius = [[_pushMessageDict objectForKey:APP42_DISTANCE] doubleValue]*1000;
-        
         CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
         isInTheRegion = [region containsCoordinate:newLocation.coordinate];
     }
@@ -284,7 +500,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     UILocalNotification *locNotification = [[UILocalNotification alloc] init];
     locNotification.alertBody = pushMessage;
     locNotification.soundName = UILocalNotificationDefaultSoundName;
-    locNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:10];
+    locNotification.fireDate = [NSDate dateWithTimeIntervalSinceNow:1];
     locNotification.repeatInterval = 0;
     [[UIApplication sharedApplication] scheduleLocalNotification:locNotification];
 }
