@@ -19,12 +19,14 @@ extern void APP42Log(NSString * format, ... ) NS_FORMAT_FUNCTION(1,2);
 +(void)setBaseURL:(NSString*)url;
 +(NSString*)getCustomCodeURL;
 +(NSString*)getAnalyticsURL;
++(void)setAnalyticsBaseURL:(NSString*)url;
 
 +(NSString*)getLoggedInUser;
 +(void)setLoggedInUser:(NSString*)user;
 
 +(BOOL)isAppStateEventTrackingEnabled;
 +(BOOL)isEventServiceEnabled;
++(BOOL)isAppAliveTrackingEnabled;
 
 
 +(void)setCacheStoragePolicy:(NSURLRequestCachePolicy)cachePolicy;

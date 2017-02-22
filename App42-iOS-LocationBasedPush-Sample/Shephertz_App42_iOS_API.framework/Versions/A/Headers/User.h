@@ -23,7 +23,7 @@
     NSArray  *roleList;
     NSString *sessionId;
     Profile  *profile;
-    BOOL isAccountLocked;
+    BOOL accountLocked;
 }
 
 /*!
@@ -49,7 +49,7 @@
 /*!
  * set and get the User's account status.
  */
-@property(nonatomic,assign)BOOL isAccountLocked;
+@property(nonatomic,assign)BOOL accountLocked;
 /*!
  *set and get the roles assigned to the User
  */

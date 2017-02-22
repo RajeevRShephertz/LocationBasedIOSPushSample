@@ -28,8 +28,10 @@
 
 +(void)enableAppStateEventTracking:(BOOL)isEnable;
 +(void)enableEventService:(BOOL)isEnable;
++(void)enableAppAliveTracking:(BOOL)isEnable;
 
 +(void)setBaseUrl:(NSString*)baseUrl;
++(void)setEventBaseUrl:(NSString*)baseUrl;
 
 +(void)setCacheStoragePolicy:(NSURLRequestCachePolicy)cachePolicy;
 +(NSURLRequestCachePolicy)getCacheStoragePolicy;

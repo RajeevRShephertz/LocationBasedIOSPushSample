@@ -226,10 +226,6 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     }
 }
 
--(void)stopMonitoringForFenceWithID:(CLRegion*)regi
-{
-    
-}
 
 -(void)addFenceDetails:(NSString*)campaignName forFence:(NSString*)fenceId
 {
@@ -250,10 +246,6 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     return [fenceDetails objectForKey:fenceId];
 }
 
-- (void)startShowingNotifications
-{
-    
-}
 
 #pragma mark- Location Manager Delegates
 -(void)locationManager:(CLLocationManager *)manager didChangeAuthorizationStatus:(CLAuthorizationStatus)status
@@ -305,15 +297,14 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
 - (void)locationManager:(CLLocationManager *)manager didEnterRegion:(CLRegion *)region {
     NSLog(@"%s", __PRETTY_FUNCTION__);
-    
-    [self scheduleNotificationWithMessage:[NSString stringWithFormat:@"Entered the region...%@",region.identifier]];
     [self sendGeoFencingPush:region forEvent:@"entry"];
+    
 }
 
 - (void)locationManager:(CLLocationManager *)manager didExitRegion:(CLRegion *)region {
     NSLog(@"%s", __PRETTY_FUNCTION__);
-    [self scheduleNotificationWithMessage:[NSString stringWithFormat:@"Exiting the region...%@",region.identifier]];
     [self sendGeoFencingPush:region forEvent:@"exit"];
+    
 }
 
 -(void)sendGeoFencingPush:(CLRegion*)region forEvent:(NSString*)event
@@ -338,6 +329,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
         }
     }];
 }
+
 
 
 -(BOOL)isFenceValid:(id)responseDict
@@ -404,8 +396,8 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
             if (self.pushType == kAPP42GEOCAMPAIGN) {
                 radius = [[regionCoordinates objectForKey:APP42_DISTANCE] doubleValue]*1000;
             }
-           // NSLog(@"1..Lat=%f, Long = %f",newLocation.coordinate.latitude,newLocation.coordinate.longitude);
-            //NSLog(@"2..Lat=%f, Long = %f",center.latitude,center.longitude);
+            /*NSLog(@"1..Lat=%f, Long = %f",newLocation.coordinate.latitude,newLocation.coordinate.longitude);
+            NSLog(@"2..Lat=%f, Long = %f",center.latitude,center.longitude);*/
 
             CLCircularRegion *region = [[CLCircularRegion alloc] initWithCenter:center radius:radius identifier:@"App42Fence"];
             isInTheRegion = [region containsCoordinate:newLocation.coordinate];
@@ -496,7 +488,7 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
 
 -(void)scheduleNotificationWithMessage:(NSString*)pushMessage
 {
-    NSLog(@"%s",__func__);
+    //NSLog(@"%s",__func__);
     UILocalNotification *locNotification = [[UILocalNotification alloc] init];
     locNotification.alertBody = pushMessage;
     locNotification.soundName = UILocalNotificationDefaultSoundName;
@@ -518,19 +510,19 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
     UIBackgroundTaskIdentifier bgTaskId = UIBackgroundTaskInvalid;
     if([application respondsToSelector:@selector(beginBackgroundTaskWithExpirationHandler:)]){
         bgTaskId = [application beginBackgroundTaskWithExpirationHandler:^{
-            NSLog(@"background task %lu expired", (unsigned long)bgTaskId);
+            //NSLog(@"background task %lu expired", (unsigned long)bgTaskId);
         }];
         if ( self.lastTaskId == UIBackgroundTaskInvalid )
         {
             self.lastTaskId = bgTaskId;
-            NSLog(@"started master task %lu", (unsigned long)self.lastTaskId);
+            //NSLog(@"started master task %lu", (unsigned long)self.lastTaskId);
         }
         else
         {
             //add this id to our list
-             NSLog(@"started background task %lu", (unsigned long)bgTaskId);
+             //NSLog(@"started background task %lu", (unsigned long)bgTaskId);
             [self.bgTaskIdList addObject:@(bgTaskId)];
-            NSLog(@"bgTaskIdList = %@",self.bgTaskIdList);
+            //NSLog(@"bgTaskIdList = %@",self.bgTaskIdList);
             [self endBackgroundTasks];
         }
     }
@@ -556,23 +548,23 @@ typedef void (^App42FetchCompletion)(UIBackgroundFetchResult);
         for ( NSUInteger i=(isEndAll?0:1); i<count; i++ )
         {
             UIBackgroundTaskIdentifier bgTaskId = [[self.bgTaskIdList objectAtIndex:0] integerValue];
-            NSLog(@"ending background task with id -%lu", (unsigned long)bgTaskId);
+            //NSLog(@"ending background task with id -%lu", (unsigned long)bgTaskId);
             [application endBackgroundTask:bgTaskId];
             [self.bgTaskIdList removeObjectAtIndex:0];
         }
         if ( self.bgTaskIdList.count > 0 )
         {
-            NSLog(@"kept background task id %@", [self.bgTaskIdList objectAtIndex:0]);
+            //NSLog(@"kept background task id %@", [self.bgTaskIdList objectAtIndex:0]);
         }
         if ( isEndAll )
         {
-            NSLog(@"no more background tasks running");
+            //NSLog(@"no more background tasks running");
             [application endBackgroundTask:self.lastTaskId];
             self.lastTaskId = UIBackgroundTaskInvalid;
         }
         else
         {
-            NSLog(@"kept master background task id %lu", (unsigned long)self.lastTaskId);
+            //NSLog(@"kept master background task id %lu", (unsigned long)self.lastTaskId);
         }
     }
 }

@@ -310,5 +310,5 @@
  */
 -(void)getUsersWithScoreRange:(NSString*)gameName minScore:(double) minScore maxScore:(double)maxScore completionBlock:(App42ResponseBlock)completionBlock;
 
--(void)addCustomScore:(NSDictionary*)scoreDict collectionName:(NSString*) collectionName;
+-(void)addCustomScore:(NSDictionary*)scoreDict collectionName:(NSString*) collectionName completionBlock:(App42ResponseBlock)completionBlock;
 @end

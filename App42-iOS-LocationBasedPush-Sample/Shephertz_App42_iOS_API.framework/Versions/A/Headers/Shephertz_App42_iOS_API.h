@@ -13,7 +13,6 @@
 #import <Shephertz_App42_iOS_API/PublicProfile.h>
 #import <Shephertz_App42_iOS_API/Friends.h>
 
-//#import <Shephertz_App42_iOS_API/ServiceAPI.h>
 #import <Shephertz_App42_iOS_API/App42API.h>
 #import <Shephertz_App42_iOS_API/Utils.h>
 #import <Shephertz_App42_iOS_API/CustomCodeService.h>
@@ -75,14 +74,12 @@
 #import "GeoQuery.h"
 #import <Shephertz_App42_iOS_API/Buddy.h>
 #import <Shephertz_App42_iOS_API/BuddyService.h>
-//#import <Shephertz_App42_iOS_API/BuddyResponseBuilder.h>
 
 
 
 #import <Shephertz_App42_iOS_API/ABTest.h>
 #import <Shephertz_App42_iOS_API/Variant.h>
 #import <Shephertz_App42_iOS_API/ABTestService.h>
-//#import <Shephertz_App42_iOS_API/ABTestResponseBuilder.h>
 
 #import <Shephertz_App42_iOS_API/Upload.h>
 #import <Shephertz_App42_iOS_API/UploadService.h>
@@ -135,9 +132,12 @@
 
 #import <Shephertz_App42_iOS_API/Timer.h>
 #import <Shephertz_App42_iOS_API/TimerService.h>
-//#import <Shephertz_App42_iOS_API/TimerResponseBuilder.h>
 
 #import <Shephertz_App42_iOS_API/EventService.h>
 
 #import <Shephertz_App42_iOS_API/App42CacheManager.h>
+#import <Shephertz_App42_iOS_API/RewardsPoint.h>
+#import <Shephertz_App42_iOS_API/UserCampaigns.h>
+#import <Shephertz_App42_iOS_API/Campaign.h>
+
 
